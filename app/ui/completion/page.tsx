@@ -1,6 +1,32 @@
 'use client';
 
+import { useState } from 'react';
+
 export default function CompletionPage() {
+	const [prompt, setPrompt] = useState('');
+	const [completion, setCompletion] = useState('');
+	const [isLoading, setIsLoading] = useState(false);
+
+	const complete = async (e: React.FormEvent) => {
+		e.preventDefault();
+
+		setIsLoading(true);
+		setPrompt('');
+
+		try {
+			const response = await fetch('/api/completion', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ prompt }),
+			});
+
+			const data = await response.json();
+			setCompletion(data.text);
+		} catch (err) {
+			console.log(err);
+		}
+	};
+
 	return (
 		<div className="flex flex-col h-screen max-w-4xl mx-auto bg-gray-50 border-x border-gray-200">
 			{/* Header */}
@@ -37,11 +63,13 @@ export default function CompletionPage() {
 
 			{/* Input Area */}
 			<div className="p-4 bg-white border-t border-gray-200">
-				<form action="" className="flex items-center gap-3 max-w-4xl mx-auto">
+				<form onSubmit={complete} className="flex items-center gap-3 max-w-4xl mx-auto">
 					<input
 						type="text"
-						placeholder="Message the assistant..."
 						className="flex-1 px-4 py-3 bg-gray-100 border border-transparent rounded-full focus:outline-none focus:bg-white focus:border-gray-300 focus:ring-2 focus:ring-gray-200 transition-all"
+						placeholder="How can I help you?"
+						value={prompt}
+						onChange={(e) => setPrompt(e.target.value)}
 					/>
 					<button
 						type="submit"
