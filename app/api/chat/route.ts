@@ -58,12 +58,12 @@ ${contextData}
 
 		// Generate streaming response
 		const result = streamText({
-			model: google('gemini-1.5-flash'),
+			model: google('gemini-2.5-flash'),
 
 			system: systemPrompt,
 
 			// REQUIRED in AI SDK v5
-			messages: convertToModelMessages(messages),
+			messages: await convertToModelMessages(messages),
 		});
 
 		// REQUIRED in AI SDK v5
