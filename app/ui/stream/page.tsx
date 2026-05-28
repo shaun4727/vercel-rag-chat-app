@@ -1,0 +1,117 @@
+'use client';
+
+import { useCompletion } from '@ai-sdk/react';
+
+export default function StreamPage() {
+	const { input, handleInputChange, handleSubmit, isLoading, completion, error, setInput } = useCompletion({
+		api: '/api/stream',
+	});
+
+	return (
+		<div className="flex flex-col h-screen max-w-4xl mx-auto bg-gray-50 border-x border-gray-200">
+			{/* Header */}
+			<div className="p-4 bg-white border-b border-gray-200 shadow-sm sticky top-0 z-10">
+				<h1 className="text-lg font-semibold text-gray-800">AI Assistant</h1>
+			</div>
+
+			{/* Chat History Area */}
+			<div className="flex-1 p-4 overflow-y-auto space-y-6">
+				{/* Static Chat History (From your original code) */}
+				<div className="flex justify-start">
+					<div className="bg-white border border-gray-200 text-gray-800 rounded-2xl rounded-tl-sm px-4 py-3 max-w-[85%] shadow-sm">
+						<p>Hello! How can I help you today?</p>
+					</div>
+				</div>
+
+				<div className="flex justify-end">
+					<div className="bg-black text-white rounded-2xl rounded-tr-sm px-4 py-3 max-w-[85%] shadow-sm">
+						<p>Can you help me redesign my Next.js component into a chat interface?</p>
+					</div>
+				</div>
+
+				<div className="flex justify-start">
+					<div className="bg-white border border-gray-200 text-gray-800 rounded-2xl rounded-tl-sm px-4 py-3 max-w-[85%] shadow-sm">
+						<p>
+							Absolutely. I have prepared a static layout for you using Tailwind CSS. The input area is
+							fixed to the bottom, and this message area will scroll naturally as the conversation grows.
+						</p>
+					</div>
+				</div>
+
+				{/* Dynamic Completion Message */}
+				{completion && (
+					<div className="flex justify-start">
+						<div className="bg-white border border-gray-200 text-gray-800 rounded-2xl rounded-tl-sm px-4 py-3 max-w-[85%] shadow-sm">
+							<p>{completion}</p>
+						</div>
+					</div>
+				)}
+
+				{/* Loading State UI */}
+				{isLoading && (
+					<div className="flex justify-start">
+						<div className="bg-white border border-gray-200 text-gray-500 rounded-2xl rounded-tl-sm px-4 py-3 max-w-[85%] shadow-sm flex items-center gap-2">
+							<span className="flex space-x-1">
+								<span className="h-2 w-2 bg-gray-400 rounded-full animate-bounce"></span>
+								<span className="h-2 w-2 bg-gray-400 rounded-full animate-bounce delay-75"></span>
+								<span className="h-2 w-2 bg-gray-400 rounded-full animate-bounce delay-150"></span>
+							</span>
+							<p className="text-sm">Thinking...</p>
+						</div>
+					</div>
+				)}
+
+				{/* Error State UI */}
+				{error?.message && (
+					<div className="flex justify-center my-4">
+						<div className="bg-red-50 border border-red-200 text-red-600 px-4 py-2 rounded-lg text-sm flex items-center gap-2 shadow-sm">
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								className="h-4 w-4"
+								fill="none"
+								viewBox="0 0 24 24"
+								stroke="currentColor"
+							>
+								<path
+									strokeLinecap="round"
+									strokeLinejoin="round"
+									strokeWidth={2}
+									d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+								/>
+							</svg>
+							{error?.message}
+						</div>
+					</div>
+				)}
+			</div>
+
+			{/* Input Area */}
+			<div className="p-4 bg-white border-t border-gray-200">
+				<form
+					onSubmit={(e) => {
+						e.preventDefault();
+						setInput('');
+						handleSubmit(e);
+					}}
+					className="flex items-center gap-3 max-w-4xl mx-auto"
+				>
+					<input
+						type="text"
+						className="flex-1 px-4 py-3 bg-gray-100 border border-transparent rounded-full focus:outline-none focus:bg-white focus:border-gray-300 focus:ring-2 focus:ring-gray-200 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+						placeholder="How can I help you?"
+						value={input}
+						onChange={handleInputChange}
+						disabled={isLoading}
+					/>
+					<button
+						type="submit"
+						disabled={isLoading || !input.trim()}
+						className="px-6 py-3 bg-black text-white font-medium rounded-full hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 disabled:opacity-50 disabled:hover:bg-black disabled:cursor-not-allowed"
+					>
+						{isLoading ? 'Sending...' : 'Send'}
+					</button>
+				</form>
+			</div>
+		</div>
+	);
+}
