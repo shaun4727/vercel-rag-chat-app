@@ -1,11 +1,23 @@
 'use client';
 
-import { useCompletion } from '@ai-sdk/react';
+import { useChat } from '@ai-sdk/react';
+import { DefaultChatTransport } from 'ai';
+import { useState } from 'react';
 
-export default function StreamPage() {
-	const { input, handleInputChange, handleSubmit, isLoading, completion, error, setInput } = useCompletion({
-		api: '/api/stream',
+export default function ChatPage() {
+	const [input, setInput] = useState('');
+
+	const { messages, sendMessage, status, error, stop } = useChat({
+		transport: new DefaultChatTransport({
+			api: '/api/chat', // Move the 'api' property inside the transport constructor
+		}),
 	});
+
+	const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+		e.preventDefault();
+		sendMessage({ text: input });
+		setInput('');
+	};
 
 	return (
 		<div className="flex flex-col h-screen max-w-4xl mx-auto bg-gray-50 border-x border-gray-200">
@@ -18,28 +30,42 @@ export default function StreamPage() {
 			<div className="flex-1 p-4 overflow-y-auto space-y-6 min-w-[640px]">
 				{/* Static Chat History (From your original code) */}
 
-				{/* Dynamic Completion Message */}
-				{completion && (
-					<div className="flex justify-start">
-						<div className="bg-white border border-gray-200 text-gray-800 rounded-2xl rounded-tl-sm px-4 py-3 max-w-[85%] shadow-sm">
-							<p>{completion}</p>
+				{messages &&
+					messages.map((message) => (
+						<div
+							key={message.id}
+							className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+						>
+							<div
+								className={`bg-white border border-gray-200 text-gray-${message.role === 'user' ? '500' : '800'} rounded-2xl rounded-tl-sm px-4 py-3 max-w-[85%] shadow-sm`}
+							>
+								{message.parts.map((part, index) => {
+									// Check if the part is a text part before rendering
+									if (part.type === 'text') {
+										return <p key={`part-${index}`}>{part.text}</p>;
+									}
+
+									// You can handle tool-invocations or image parts here
+									return null;
+								})}
+							</div>
 						</div>
-					</div>
-				)}
+					))}
 
 				{/* Loading State UI */}
-				{isLoading && (
-					<div className="flex justify-start">
-						<div className="bg-white border border-gray-200 text-gray-500 rounded-2xl rounded-tl-sm px-4 py-3 max-w-[85%] shadow-sm flex items-center gap-2">
-							<span className="flex space-x-1">
-								<span className="h-2 w-2 bg-gray-400 rounded-full animate-bounce"></span>
-								<span className="h-2 w-2 bg-gray-400 rounded-full animate-bounce delay-75"></span>
-								<span className="h-2 w-2 bg-gray-400 rounded-full animate-bounce delay-150"></span>
-							</span>
-							<p className="text-sm">Thinking...</p>
+				{status === 'submitted' ||
+					(status === 'streaming' && (
+						<div className="flex justify-start">
+							<div className="bg-white border border-gray-200 text-gray-500 rounded-2xl rounded-tl-sm px-4 py-3 max-w-[85%] shadow-sm flex items-center gap-2">
+								<span className="flex space-x-1">
+									<span className="h-2 w-2 bg-gray-400 rounded-full animate-bounce"></span>
+									<span className="h-2 w-2 bg-gray-400 rounded-full animate-bounce delay-75"></span>
+									<span className="h-2 w-2 bg-gray-400 rounded-full animate-bounce delay-150"></span>
+								</span>
+								<p className="text-sm">Thinking...</p>
+							</div>
 						</div>
-					</div>
-				)}
+					))}
 
 				{/* Error State UI */}
 				{error?.message && (
@@ -69,8 +95,6 @@ export default function StreamPage() {
 			<div className="p-4 bg-white border-t border-gray-200">
 				<form
 					onSubmit={(e) => {
-						e.preventDefault();
-						setInput('');
 						handleSubmit(e);
 					}}
 					className="flex items-center gap-3 max-w-4xl mx-auto"
@@ -80,16 +104,15 @@ export default function StreamPage() {
 						className="flex-1 px-4 py-3 bg-gray-100 border border-transparent rounded-full focus:outline-none focus:bg-white focus:border-gray-300 focus:ring-2 focus:ring-gray-200 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
 						placeholder="How can I help you?"
 						value={input}
-						onChange={handleInputChange}
-						disabled={isLoading}
+						onChange={(e) => setInput(e.target.value)}
+						// disabled={isLoading}
 					/>
-					{isLoading ? (
+					{status === 'streaming' || status === 'submitted' ? (
 						<div className="absolute bottom-24 left-1/2 transform -translate-x-1/2">
 							<button
 								onClick={() => stop()}
 								className="flex items-center gap-2 bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-full shadow-md hover:bg-gray-50 transition-colors text-sm font-medium"
 							>
-								{/* Stop Icon (Square) */}
 								<svg
 									xmlns="http://www.w3.org/2000/svg"
 									width="12"
@@ -105,10 +128,12 @@ export default function StreamPage() {
 					) : (
 						<button
 							type="submit"
-							disabled={isLoading || !input.trim()}
+							// 1. Simplified disabled state
+							disabled={!input.trim()}
 							className="px-6 py-3 bg-black text-white font-medium rounded-full hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 disabled:opacity-50 disabled:hover:bg-black disabled:cursor-not-allowed"
 						>
-							{isLoading ? 'Sending...' : 'Send'}
+							{/* 2. Simplified text state */}
+							Send
 						</button>
 					)}
 				</form>
